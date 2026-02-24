@@ -7,6 +7,7 @@ namespace Professionals.UI
     {
         public MenuButton() : base()
         {
+            AutoSize = false;
             FlatStyle = FlatStyle.Flat;
             FlatAppearance.BorderSize = 0;
             Width = 150;

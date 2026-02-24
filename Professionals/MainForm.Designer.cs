@@ -42,7 +42,7 @@
             this.panelSidebar.Dock = System.Windows.Forms.DockStyle.Left;
             this.panelSidebar.Location = new System.Drawing.Point(0, 60);
             this.panelSidebar.Name = "panelSidebar";
-            this.panelSidebar.Size = new System.Drawing.Size(162, 390);
+            this.panelSidebar.Size = new System.Drawing.Size(187, 390);
             this.panelSidebar.TabIndex = 0;
             // 
             // topBar
@@ -56,20 +56,21 @@
             // panelContent
             // 
             this.panelContent.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelContent.Location = new System.Drawing.Point(162, 60);
+            this.panelContent.Location = new System.Drawing.Point(187, 60);
             this.panelContent.Name = "panelContent";
-            this.panelContent.Size = new System.Drawing.Size(419, 390);
+            this.panelContent.Size = new System.Drawing.Size(394, 390);
             this.panelContent.TabIndex = 2;
             // 
             // menuContainer
             // 
             this.menuContainer.AutoScroll = true;
             this.menuContainer.AutoSize = true;
+            this.menuContainer.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.menuContainer.Dock = System.Windows.Forms.DockStyle.Fill;
             this.menuContainer.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
             this.menuContainer.Location = new System.Drawing.Point(0, 0);
             this.menuContainer.Name = "menuContainer";
-            this.menuContainer.Size = new System.Drawing.Size(162, 390);
+            this.menuContainer.Size = new System.Drawing.Size(187, 390);
             this.menuContainer.TabIndex = 0;
             this.menuContainer.WrapContents = false;
             // 

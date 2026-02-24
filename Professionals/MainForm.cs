@@ -1,4 +1,4 @@
-﻿using Professionals.UI;
+﻿using CustomUIComponents;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
@@ -17,17 +17,22 @@ namespace Professionals
 
         private void BuildSidebar()
         {
-            List<string> menuItems = new List<string>() { 
-                "Главная",
-                "Монитор ТА", 
-                "Детальные отчёты",
-                "Учёт ТМЦ", 
-                "Администрирование" };
+            var menuItems = new Dictionary<string, List<string>>() {
+                { "Главная", null },
+                { "Монитор ТА", null },
+                { "Детальные отчёты", null },
+                { "Учёт ТМЦ", null },
+                { "Администрирование", new List<string> { "ТА",
+                                                          "Компании",
+                                                          "Пользователи",
+                                                          "Модемы",
+                                                          "Дополнительные"
+                } 
+                } };
 
-            foreach (string item in menuItems)
+            foreach (KeyValuePair<string, List<string>> item in menuItems)
             {
-                var button = new MenuButton();
-                button.Text = item;
+                var button = new MenuButtonContainer(item.Key, item.Value);
                 menuContainer.Controls.Add(button);
             }
         }
