@@ -20,7 +20,7 @@ namespace CustomUIComponents
         };
 
         private bool isExpanded_;
-        public MenuButtonContainer(string text, List<string> subItems = null)
+        public MenuButtonContainer(string text, List<string> subItems, Bitmap icon)
             : base()
         {
             InitializeComponent();
@@ -30,6 +30,11 @@ namespace CustomUIComponents
             {
                 button_.Text = text;
                 button_.Click += Button__Click;
+
+                if (icon != null)
+                {
+                   button_.SetImage(icon);
+                }
             }
 
             mainLayout.Controls.Add(button_);

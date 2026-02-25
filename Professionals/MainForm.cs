@@ -1,10 +1,17 @@
 ﻿using CustomUIComponents;
+using Professionals.Properties;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 
 namespace Professionals
 {
+    struct MenuButtonInfo
+    {
+        public string Name { get; set; }
+        public Bitmap Icon { get; set; }
+    }
+
     public partial class MainForm : Form
     {
         private void ApplyStyle()
@@ -17,12 +24,12 @@ namespace Professionals
 
         private void BuildSidebar()
         {
-            var menuItems = new Dictionary<string, List<string>>() {
-                { "Главная", null },
-                { "Монитор ТА", null },
-                { "Детальные отчёты", null },
-                { "Учёт ТМЦ", null },
-                { "Администрирование", new List<string> { "ТА",
+            var menuItems = new Dictionary<MenuButtonInfo, List<string>>() {
+                { new MenuButtonInfo {Name = "Главная", Icon = Resources.search}, null },
+                { new MenuButtonInfo {Name = "Монитор ТА", Icon = Resources.desktop }, null },
+                { new MenuButtonInfo {Name = "Детальные отчёты", Icon = Resources.file_text_o }, null },
+                { new MenuButtonInfo {Name = "Учёт ТМЦ", Icon = Resources.shopping_cart }, null },
+                { new MenuButtonInfo {Name = "Администрирование", Icon = Resources.cogs }, new List<string> { "ТА",
                                                           "Компании",
                                                           "Пользователи",
                                                           "Модемы",
@@ -30,9 +37,9 @@ namespace Professionals
                 } 
                 } };
 
-            foreach (KeyValuePair<string, List<string>> item in menuItems)
+            foreach (KeyValuePair<MenuButtonInfo, List<string>> item in menuItems)
             {
-                var button = new MenuButtonContainer(item.Key, item.Value);
+                var button = new MenuButtonContainer(item.Key.Name, item.Value, item.Key.Icon);
                 menuContainer.Controls.Add(button);
             }
         }
@@ -42,6 +49,11 @@ namespace Professionals
             InitializeComponent();
             ApplyStyle();
             BuildSidebar();
+        }
+
+        private void menuContainer_Paint(object sender, PaintEventArgs e)
+        {
+
         }
     }
 }
