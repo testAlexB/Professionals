@@ -42,7 +42,7 @@
             this.panelSidebar.Dock = System.Windows.Forms.DockStyle.Left;
             this.panelSidebar.Location = new System.Drawing.Point(0, 60);
             this.panelSidebar.Name = "panelSidebar";
-            this.panelSidebar.Size = new System.Drawing.Size(187, 390);
+            this.panelSidebar.Size = new System.Drawing.Size(230, 708);
             this.panelSidebar.TabIndex = 0;
             // 
             // topBar
@@ -50,15 +50,15 @@
             this.topBar.Dock = System.Windows.Forms.DockStyle.Top;
             this.topBar.Location = new System.Drawing.Point(0, 0);
             this.topBar.Name = "topBar";
-            this.topBar.Size = new System.Drawing.Size(581, 60);
+            this.topBar.Size = new System.Drawing.Size(1264, 60);
             this.topBar.TabIndex = 1;
             // 
             // panelContent
             // 
             this.panelContent.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelContent.Location = new System.Drawing.Point(187, 60);
+            this.panelContent.Location = new System.Drawing.Point(230, 60);
             this.panelContent.Name = "panelContent";
-            this.panelContent.Size = new System.Drawing.Size(394, 390);
+            this.panelContent.Size = new System.Drawing.Size(1034, 708);
             this.panelContent.TabIndex = 2;
             // 
             // menuContainer
@@ -70,7 +70,7 @@
             this.menuContainer.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
             this.menuContainer.Location = new System.Drawing.Point(0, 0);
             this.menuContainer.Name = "menuContainer";
-            this.menuContainer.Size = new System.Drawing.Size(187, 390);
+            this.menuContainer.Size = new System.Drawing.Size(230, 708);
             this.menuContainer.TabIndex = 0;
             this.menuContainer.WrapContents = false;
             // 
@@ -79,12 +79,13 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Control;
-            this.ClientSize = new System.Drawing.Size(581, 450);
+            this.ClientSize = new System.Drawing.Size(1264, 768);
             this.Controls.Add(this.panelContent);
             this.Controls.Add(this.panelSidebar);
             this.Controls.Add(this.topBar);
             this.Name = "MainForm";
-            this.Text = "Form1";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            this.Text = "Панель франчайзера";
             this.panelSidebar.ResumeLayout(false);
             this.panelSidebar.PerformLayout();
             this.ResumeLayout(false);
