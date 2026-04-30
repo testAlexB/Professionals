@@ -46,7 +46,6 @@ cd local_dev_agent
 python -m venv .venv
 .\.venv\Scripts\activate
 pip install -r requirements.txt
-
 # для web UI дополнительно:
 pip install -r requirements-web.txt
 ```

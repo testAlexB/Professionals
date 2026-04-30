@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from typing import Dict, List
 
 from .llm_client import OllamaClient
@@ -50,6 +51,19 @@ class AgentOrchestrator:
             model_text = self.llm.chat(current_msgs)
             tool_payload = self._maybe_parse_json(model_text)
             self.history.append({"role": "assistant", "content": model_text})
+            if not tool_payload and self._looks_like_manual_instructions(model_text):
+                current_msgs = [
+                    {"role": "system", "content": SYSTEM_PROMPT + "\nLessons:\n" + self._render_lessons()},
+                    *self.history,
+                    {
+                        "role": "user",
+                        "content": (
+                            "Do not provide manual instructions. Execute actions yourself using JSON tool calls only. "
+                            "Use run_command/read_file/write_file/... as needed and continue until task is done."
+                        ),
+                    },
+                ]
+                continue
             if not tool_payload:
                 return model_text
 
@@ -68,6 +82,20 @@ class AgentOrchestrator:
         timeout_text = "Stopped after max autonomous steps. Please continue with a follow-up request."
         self.history.append({"role": "assistant", "content": timeout_text})
         return timeout_text
+
+    def _looks_like_manual_instructions(self, text: str) -> bool:
+        lowered = text.lower()
+        if "```" in lowered:
+            return True
+        patterns = [
+            r"\bdotnet\s+new\b",
+            r"\bdotnet\s+build\b",
+            r"\bперейд(ем|ите)\b",
+            r"\bзапуст(им|ите)\b",
+            r"\bвыполн(ите|им)\b",
+            r"\bcd\s+",
+        ]
+        return any(re.search(p, lowered) for p in patterns)
 
 
     def _handle_local_command(self, user_text: str):

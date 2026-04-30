@@ -88,3 +88,16 @@ def test_orchestrator_autonomous_multi_step(tmp_path: Path):
     result = agent.run_turn("create and update file")
     assert result == "All done"
     assert (tmp_path / "a.txt").read_text(encoding="utf-8") == "AB"
+
+
+def test_orchestrator_retries_when_llm_gives_manual_steps(tmp_path: Path):
+    tools = WorkspaceTools(tmp_path)
+    memory = LessonMemory(tmp_path / "lessons.json")
+    llm = FakeLLM([
+        "Давайте выполним команды:\n```bash\ndotnet new wpf -n MyWpfApp\n```",
+        '{"tool":"run_command","args":{"command":"python -c \\"print(1)\\""}}',
+        "Done",
+    ])
+    agent = AgentOrchestrator(llm, tools, memory)
+    result = agent.run_turn("создай и собери проект")
+    assert result == "Done"
