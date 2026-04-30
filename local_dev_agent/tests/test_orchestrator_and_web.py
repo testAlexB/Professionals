@@ -26,6 +26,9 @@ def test_orchestrator_commands(tmp_path: Path):
     assert agent.run_turn("/lessons") == "No lessons yet."
     assert agent.run_turn("/lesson Keep API stable") == "Lesson saved."
     assert "Keep API stable" in agent.run_turn("/lessons")
+    assert agent.run_turn("/exit") == "Session closed."
+    assert "Session is closed" in agent.run_turn("do something")
+    assert agent.run_turn("/clear") == "Chat history cleared."
 
 
 def test_orchestrator_tool_flow(tmp_path: Path):

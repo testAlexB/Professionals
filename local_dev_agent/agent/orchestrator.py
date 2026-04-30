@@ -28,6 +28,7 @@ class AgentOrchestrator:
         self.tools = tools
         self.memory = memory
         self.history: List[Dict[str, str]] = []
+        self.exited = False
         self.trace_file = trace_file
         if self.trace_file is not None:
             self.trace_file.parent.mkdir(parents=True, exist_ok=True)
@@ -42,6 +43,8 @@ class AgentOrchestrator:
         return "\n".join(f"- {x}" for x in lessons)
 
     def run_turn(self, user_text: str) -> str:
+        if self.exited and user_text.strip() != "/clear":
+            return "Session is closed. Send /clear to start a new session."
         cmd = self._handle_local_command(user_text)
         if cmd is not None:
             return cmd
@@ -164,7 +167,12 @@ class AgentOrchestrator:
             return "Commands: /help, /clear, /lessons, /lesson <text>, /exit"
         if t == "/clear":
             self.clear_history()
+            self.exited = False
             return "Chat history cleared."
+        if t == "/exit":
+            self.exited = True
+            self.clear_history()
+            return "Session closed."
         if t == "/lessons":
             lessons = self.memory.all_lessons()
             return "No lessons yet." if not lessons else "\n".join(f"{i}. {x}" for i, x in enumerate(lessons, 1))
