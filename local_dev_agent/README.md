@@ -46,6 +46,7 @@ cd local_dev_agent
 python -m venv .venv
 .\.venv\Scripts\activate
 pip install -r requirements.txt
+
 # для web UI дополнительно:
 pip install -r requirements-web.txt
 ```
@@ -100,10 +101,9 @@ Gradio выдаст публичный URL (временный), который 
 - добавляете правило через `/lesson ...`,
 - агент применяет эти уроки в следующих задачах.
 
+
 Дополнительно агент умеет выполнять команды внутри `--workspace` через tool `run_command`
 с белым списком программ: `dotnet`, `python`, `python3`, `py`, `pytest`.
-
-Это не fine-tuning весов модели, но в реальной разработке обычно сильно помогает.
 
 ---
 
