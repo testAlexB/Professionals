@@ -46,6 +46,10 @@ cd local_dev_agent
 python -m venv .venv
 .\.venv\Scripts\activate
 pip install -r requirements.txt
+
+# для web UI дополнительно:
+pip install -r requirements-web.txt
+
 ```
 
 ---
@@ -118,3 +122,10 @@ python -m agent.web_app --help
 ```
 
 Если нет `ollama` или `gradio`, приложение покажет понятную ошибку с подсказкой установки зависимостей.
+
+
+## 8) Совместимость Python
+
+- CLI/ядро: Python 3.10+
+- Web UI (gradio): лучше Python 3.10–3.12.
+- На Python 3.13 могут быть конфликты зависимостей gradio/audioop-lts. В таком случае используйте Python 3.12 для web UI.

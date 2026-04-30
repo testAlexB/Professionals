@@ -32,7 +32,7 @@ def create_chat_interface(agent: AgentOrchestrator):
         import gradio as gr
     except ModuleNotFoundError as exc:
         raise RuntimeError(
-            "Missing dependency: gradio. Install with `pip install -r requirements.txt`."
+            "Missing dependency: gradio. Install with `pip install -r requirements-web.txt` (Python 3.12 recommended)."
         ) from exc
 
     def chat_fn(message: str, history: list[list[str]]):
