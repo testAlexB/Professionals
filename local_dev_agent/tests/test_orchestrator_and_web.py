@@ -42,7 +42,12 @@ def test_orchestrator_tool_flow(tmp_path: Path):
 
 
 def test_build_agent(tmp_path: Path):
-    agent = build_agent(str(tmp_path), "qwen2.5-coder:7b", str(tmp_path / "lessons.json"))
+    agent = build_agent(
+        str(tmp_path),
+        "qwen2.5-coder:7b",
+        str(tmp_path / "lessons.json"),
+        str(tmp_path / "trace.jsonl"),
+    )
     assert isinstance(agent, AgentOrchestrator)
 
 
@@ -134,19 +139,24 @@ def test_manual_instruction_detector_patterns(tmp_path: Path):
     assert not agent._looks_like_manual_instructions("Проект успешно создан и собран.")
 
 
-def test_action_request_without_tool_calls_hits_autonomous_cap(tmp_path: Path):
+def test_action_request_without_tool_calls_returns_explicit_tool_mode_error(tmp_path: Path):
     tools = WorkspaceTools(tmp_path)
     memory = LessonMemory(tmp_path / "lessons.json")
-    llm = FakeLLM([
-        "Ок, начну.",
-        "Сейчас сделаю.",
-        "Подождите...",
-        "Еще думаю...",
-        "Шаг 5",
-        "Шаг 6",
-        "Шаг 7",
-        "Шаг 8",
-    ])
+    llm = FakeLLM(["Ок, начну.", "Сейчас сделаю.", "Подождите..."])
     agent = AgentOrchestrator(llm, tools, memory)
     result = agent.run_turn("сделай проект и запусти сборку")
-    assert "Stopped after max autonomous steps" in result
+    assert "could not switch to tool execution mode" in result
+    assert "Подождите..." in result
+
+
+def test_orchestrator_writes_trace_log(tmp_path: Path):
+    tools = WorkspaceTools(tmp_path)
+    memory = LessonMemory(tmp_path / "lessons.json")
+    trace_file = tmp_path / "trace.jsonl"
+    llm = FakeLLM(['{"tool":"write_file","args":{"path":"a.txt","content":"ok"}}', "Done"])
+    agent = AgentOrchestrator(llm, tools, memory, trace_file=trace_file)
+    result = agent.run_turn("save file")
+    assert result == "Done"
+    raw = trace_file.read_text(encoding="utf-8")
+    assert '"event": "model_response"' in raw
+    assert '"event": "tool_result"' in raw

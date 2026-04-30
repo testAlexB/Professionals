@@ -17,14 +17,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--host", default="0.0.0.0")
     parser.add_argument("--port", type=int, default=7860)
     parser.add_argument("--share", action="store_true", help="Create public temporary gradio link")
+    parser.add_argument("--trace-file", default=".agent_trace.jsonl", help="Path to JSONL trace log")
     return parser.parse_args()
 
 
-def build_agent(workspace: str, model: str, memory_file: str) -> AgentOrchestrator:
+def build_agent(workspace: str, model: str, memory_file: str, trace_file: str) -> AgentOrchestrator:
     tools = WorkspaceTools(Path(workspace).resolve())
     memory = LessonMemory(Path(memory_file).resolve())
     llm = OllamaClient(model)
-    return AgentOrchestrator(llm, tools, memory)
+    return AgentOrchestrator(llm, tools, memory, trace_file=Path(trace_file).resolve())
 
 
 def create_chat_interface(agent: AgentOrchestrator):
@@ -54,7 +55,7 @@ def create_chat_interface(agent: AgentOrchestrator):
 
 def main() -> None:
     args = parse_args()
-    agent = build_agent(args.workspace, args.model, args.memory_file)
+    agent = build_agent(args.workspace, args.model, args.memory_file, args.trace_file)
     demo = create_chat_interface(agent)
     demo.launch(server_name=args.host, server_port=args.port, share=args.share)
 

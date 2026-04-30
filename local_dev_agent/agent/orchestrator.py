@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Dict, List
 
 from .llm_client import OllamaClient
@@ -15,14 +17,20 @@ If no tool needed, return normal text.
 Always follow user's lessons.
 """
 MAX_TOOL_STEPS = 8
+MAX_TOOLLESS_RETRIES = 2
 
 
 class AgentOrchestrator:
-    def __init__(self, llm: OllamaClient, tools: WorkspaceTools, memory: LessonMemory) -> None:
+    def __init__(
+        self, llm: OllamaClient, tools: WorkspaceTools, memory: LessonMemory, trace_file: Path | None = None
+    ) -> None:
         self.llm = llm
         self.tools = tools
         self.memory = memory
         self.history: List[Dict[str, str]] = []
+        self.trace_file = trace_file
+        if self.trace_file is not None:
+            self.trace_file.parent.mkdir(parents=True, exist_ok=True)
 
     def clear_history(self) -> None:
         self.history = []
@@ -49,8 +57,10 @@ class AgentOrchestrator:
         must_execute = self._request_requires_actions(user_text)
         current_msgs = msgs
         executed_tools = 0
+        toolless_retries = 0
         for _ in range(MAX_TOOL_STEPS):
             model_text = self.llm.chat(current_msgs)
+            self._trace("model_response", model_text)
             tool_payload = self._maybe_parse_json(model_text)
             self.history.append({"role": "assistant", "content": model_text})
             if (
@@ -58,6 +68,16 @@ class AgentOrchestrator:
                 and executed_tools == 0
                 and (must_execute or self._looks_like_manual_instructions(model_text))
             ):
+                toolless_retries += 1
+                if toolless_retries > MAX_TOOLLESS_RETRIES:
+                    fail_text = (
+                        "Agent could not switch to tool execution mode. "
+                        "Model kept returning non-tool text instead of JSON tool calls.\n"
+                        f"Last model response:\n{model_text}"
+                    )
+                    self.history.append({"role": "assistant", "content": fail_text})
+                    self._trace("agent_error", fail_text)
+                    return fail_text
                 current_msgs = [
                     {"role": "system", "content": SYSTEM_PROMPT + "\nLessons:\n" + self._render_lessons()},
                     *self.history,
@@ -74,7 +94,9 @@ class AgentOrchestrator:
                 return model_text
 
             tool_result = self._execute_tool(tool_payload)
+            self._trace("tool_result", tool_result)
             executed_tools += 1
+            toolless_retries = 0
             self.history.append({"role": "tool", "content": tool_result})
             current_msgs = [
                 {"role": "system", "content": SYSTEM_PROMPT + "\nLessons:\n" + self._render_lessons()},
@@ -88,7 +110,19 @@ class AgentOrchestrator:
 
         timeout_text = "Stopped after max autonomous steps. Please continue with a follow-up request."
         self.history.append({"role": "assistant", "content": timeout_text})
+        self._trace("agent_error", timeout_text)
         return timeout_text
+
+    def _trace(self, event: str, content: str) -> None:
+        if self.trace_file is None:
+            return
+        record = {
+            "ts": datetime.now(timezone.utc).isoformat(),
+            "event": event,
+            "content": content,
+        }
+        with self.trace_file.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
     def _request_requires_actions(self, user_text: str) -> bool:
         lowered = user_text.lower()

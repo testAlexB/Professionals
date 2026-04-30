@@ -14,6 +14,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--workspace", required=True, help="Folder where agent can read/write files")
     parser.add_argument("--model", default="qwen2.5-coder:14b", help="Ollama model name")
     parser.add_argument("--memory-file", default=".agent_lessons.json", help="Lessons file path")
+    parser.add_argument("--trace-file", default=".agent_trace.jsonl", help="Path to JSONL trace log")
     return parser.parse_args()
 
 
@@ -32,7 +33,7 @@ def run() -> None:
     tools = WorkspaceTools(workspace)
     memory = LessonMemory(Path(args.memory_file).resolve())
     llm = OllamaClient(args.model)
-    agent = AgentOrchestrator(llm, tools, memory)
+    agent = AgentOrchestrator(llm, tools, memory, trace_file=Path(args.trace_file).resolve())
 
     console.print("[bold green]Local Dev Agent started[/bold green]")
     console.print(f"Workspace: {workspace}")

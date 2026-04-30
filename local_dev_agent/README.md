@@ -56,6 +56,8 @@ pip install -r requirements-web.txt
 
 ```powershell
 python -m agent.main --workspace "C:\\Users\\<YOU>\\source\\my_project" --model qwen2.5-coder:14b
+# опционально: лог всех ответов модели и результатов инструментов:
+# --trace-file ".agent_trace.jsonl"
 ```
 
 Команды в чате:
@@ -71,6 +73,8 @@ python -m agent.main --workspace "C:\\Users\\<YOU>\\source\\my_project" --model 
 
 ```powershell
 python -m agent.web_app --workspace "C:\\Users\\<YOU>\\source\\my_project" --model qwen2.5-coder:14b --host 0.0.0.0 --port 7860
+# опционально: лог всех ответов модели и результатов инструментов:
+# --trace-file ".agent_trace.jsonl"
 ```
 
 Откройте: `http://localhost:7860`
