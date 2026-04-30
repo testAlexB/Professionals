@@ -62,3 +62,15 @@ def test_create_chat_interface_without_gradio(tmp_path: Path, monkeypatch):
 
     with pytest.raises(RuntimeError, match="Missing dependency: gradio"):
         create_chat_interface(agent)
+
+
+def test_orchestrator_run_command_flow(tmp_path: Path):
+    tools = WorkspaceTools(tmp_path)
+    memory = LessonMemory(tmp_path / "lessons.json")
+    llm = FakeLLM([
+        '{"tool":"run_command","args":{"command":"python -c \\"print(42)\\""}}',
+        "Done",
+    ])
+    agent = AgentOrchestrator(llm, tools, memory)
+    result = agent.run_turn("run python")
+    assert result == "Done"

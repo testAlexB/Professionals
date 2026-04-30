@@ -22,3 +22,12 @@ def test_tools_read_write_list(tmp_path: Path):
 
     l = tools.list_files("src")
     assert l.ok and "src/a.py" in l.message
+
+
+def test_tools_run_command(tmp_path: Path):
+    tools = WorkspaceTools(tmp_path)
+    ok = tools.run_command('python -c "print(123)"')
+    assert ok.ok and "123" in ok.message
+
+    bad = tools.run_command("bash -lc 'echo hi'")
+    assert not bad.ok and "Command not allowed" in bad.message

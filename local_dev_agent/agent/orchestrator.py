@@ -9,7 +9,9 @@ from .tools import WorkspaceTools
 
 SYSTEM_PROMPT = """You are a local coding assistant.
 You can call tools by returning JSON only in this format:
-{"tool":"read_file|write_file|append_file|list_files","args":{...}}
+
+{"tool":"read_file|write_file|append_file|list_files|run_command","args":{...}}
+
 If no tool needed, return normal text.
 Always follow user's lessons.
 """
@@ -102,6 +104,8 @@ class AgentOrchestrator:
             result = self.tools.append_file(args["path"], args["content"])
         elif tool == "list_files":
             result = self.tools.list_files(args.get("path", "."))
+        elif tool == "run_command":
+            result = self.tools.run_command(args["command"], args.get("timeout_sec", 300))
         else:
             return f"Unknown tool: {tool}"
 

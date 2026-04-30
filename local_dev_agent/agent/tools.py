@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+import shlex
+import subprocess
 
 
 @dataclass
@@ -39,6 +41,48 @@ class WorkspaceTools:
         with path.open("a", encoding="utf-8") as f:
             f.write(content)
         return ToolResult(True, f"Appended: {relative_path}")
+
+
+
+    def run_command(self, command: str, timeout_sec: int = 120) -> ToolResult:
+        command = command.strip()
+        if not command:
+            return ToolResult(False, "Command is empty")
+
+        try:
+            parts = shlex.split(command)
+        except ValueError as exc:
+            return ToolResult(False, f"Invalid command: {exc}")
+
+        if not parts:
+            return ToolResult(False, "Command is empty")
+
+        allowed = {"dotnet", "python", "python3", "py", "pytest"}
+        if parts[0] not in allowed:
+            return ToolResult(False, f"Command not allowed: {parts[0]}")
+
+        try:
+            completed = subprocess.run(
+                parts,
+                cwd=self.workspace,
+                capture_output=True,
+                text=True,
+                timeout=timeout_sec,
+                check=False,
+            )
+        except FileNotFoundError:
+            return ToolResult(False, f"Command not found: {parts[0]}")
+        except subprocess.TimeoutExpired:
+            return ToolResult(False, f"Command timed out after {timeout_sec}s")
+
+        output = (completed.stdout or "")
+        err = (completed.stderr or "")
+        merged = (output + ("\n" if output and err else "") + err).strip()
+        merged = merged or "<no output>"
+
+        if completed.returncode != 0:
+            return ToolResult(False, f"Exit code {completed.returncode}\n{merged}")
+        return ToolResult(True, merged)
 
     def list_files(self, relative_dir: str = ".") -> ToolResult:
         directory = self._resolve_safe(relative_dir)
