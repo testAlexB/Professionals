@@ -174,15 +174,44 @@ class AgentOrchestrator:
         return None
     def _maybe_parse_json(self, text: str):
         text = text.strip()
-        if not text.startswith("{"):
-            return None
-        try:
-            payload = json.loads(text)
-            if "tool" in payload and "args" in payload:
-                return payload
-        except json.JSONDecodeError:
-            return None
+        candidates = [text]
+        fenced = re.findall(r"```(?:json)?\s*([\s\S]*?)```", text, flags=re.IGNORECASE)
+        candidates.extend(x.strip() for x in fenced if x.strip())
+
+        for candidate in candidates:
+            try:
+                payload = json.loads(candidate)
+                if "tool" in payload and "args" in payload:
+                    return payload
+            except json.JSONDecodeError:
+                pass
+
+        for candidate in candidates:
+            for obj_text in self._extract_json_objects(candidate):
+                try:
+                    payload = json.loads(obj_text)
+                    if "tool" in payload and "args" in payload:
+                        return payload
+                except json.JSONDecodeError:
+                    continue
         return None
+
+    def _extract_json_objects(self, text: str) -> List[str]:
+        chunks: List[str] = []
+        start = -1
+        depth = 0
+        for i, ch in enumerate(text):
+            if ch == "{":
+                if depth == 0:
+                    start = i
+                depth += 1
+            elif ch == "}":
+                if depth > 0:
+                    depth -= 1
+                    if depth == 0 and start != -1:
+                        chunks.append(text[start : i + 1])
+                        start = -1
+        return chunks
 
     def _execute_tool(self, payload: dict) -> str:
         tool = payload["tool"]

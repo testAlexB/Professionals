@@ -160,3 +160,34 @@ def test_orchestrator_writes_trace_log(tmp_path: Path):
     raw = trace_file.read_text(encoding="utf-8")
     assert '"event": "model_response"' in raw
     assert '"event": "tool_result"' in raw
+
+
+def test_parse_fenced_json_tool_call(tmp_path: Path):
+    tools = WorkspaceTools(tmp_path)
+    memory = LessonMemory(tmp_path / "lessons.json")
+    llm = FakeLLM([
+        '```json\n{"tool":"write_file","args":{"path":"a.txt","content":"ok"}}\n```',
+        "Done",
+    ])
+    agent = AgentOrchestrator(llm, tools, memory)
+    result = agent.run_turn("save file")
+    assert result == "Done"
+    assert (tmp_path / "a.txt").read_text(encoding="utf-8") == "ok"
+
+
+def test_parse_tool_call_embedded_in_explanatory_text(tmp_path: Path):
+    tools = WorkspaceTools(tmp_path)
+    memory = LessonMemory(tmp_path / "lessons.json")
+    llm = FakeLLM([
+        (
+            "Sure, I'll do it.\n"
+            "```json\n"
+            '{"tool":"run_command","args":{"command":"python -c \\"print(11)\\""}}\n'
+            "```\n"
+            "Then I will continue."
+        ),
+        "Done",
+    ])
+    agent = AgentOrchestrator(llm, tools, memory)
+    result = agent.run_turn("run command")
+    assert result == "Done"
