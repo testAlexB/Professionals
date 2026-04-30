@@ -109,7 +109,7 @@ class AgentOrchestrator:
         elif tool == "list_files":
             result = self.tools.list_files(args.get("path", "."))
         elif tool == "run_command":
-            result = self.tools.run_command(args["command"], args.get("timeout_sec", 120))
+            result = self.tools.run_command(args["command"], args.get("timeout_sec", 300))
         else:
             return f"Unknown tool: {tool}"
 
