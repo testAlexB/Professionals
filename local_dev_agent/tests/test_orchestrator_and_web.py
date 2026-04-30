@@ -74,3 +74,17 @@ def test_orchestrator_run_command_flow(tmp_path: Path):
     agent = AgentOrchestrator(llm, tools, memory)
     result = agent.run_turn("run python")
     assert result == "Done"
+
+
+def test_orchestrator_autonomous_multi_step(tmp_path: Path):
+    tools = WorkspaceTools(tmp_path)
+    memory = LessonMemory(tmp_path / "lessons.json")
+    llm = FakeLLM([
+        '{"tool":"write_file","args":{"path":"a.txt","content":"A"}}',
+        '{"tool":"append_file","args":{"path":"a.txt","content":"B"}}',
+        "All done",
+    ])
+    agent = AgentOrchestrator(llm, tools, memory)
+    result = agent.run_turn("create and update file")
+    assert result == "All done"
+    assert (tmp_path / "a.txt").read_text(encoding="utf-8") == "AB"

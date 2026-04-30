@@ -9,12 +9,11 @@ from .tools import WorkspaceTools
 
 SYSTEM_PROMPT = """You are a local coding assistant.
 You can call tools by returning JSON only in this format:
-
 {"tool":"read_file|write_file|append_file|list_files|run_command","args":{...}}
-
 If no tool needed, return normal text.
 Always follow user's lessons.
 """
+MAX_TOOL_STEPS = 8
 
 
 class AgentOrchestrator:
@@ -44,26 +43,31 @@ class AgentOrchestrator:
             {"role": "user", "content": user_text},
         ]
 
-        first = self.llm.chat(msgs)
         self.history.append({"role": "user", "content": user_text})
 
-        tool_payload = self._maybe_parse_json(first)
-        if not tool_payload:
-            self.history.append({"role": "assistant", "content": first})
-            return first
+        current_msgs = msgs
+        for _ in range(MAX_TOOL_STEPS):
+            model_text = self.llm.chat(current_msgs)
+            tool_payload = self._maybe_parse_json(model_text)
+            self.history.append({"role": "assistant", "content": model_text})
+            if not tool_payload:
+                return model_text
 
-        tool_result = self._execute_tool(tool_payload)
-        self.history.append({"role": "assistant", "content": first})
-        self.history.append({"role": "tool", "content": tool_result})
+            tool_result = self._execute_tool(tool_payload)
+            self.history.append({"role": "tool", "content": tool_result})
+            current_msgs = [
+                {"role": "system", "content": SYSTEM_PROMPT + "\nLessons:\n" + self._render_lessons()},
+                *self.history,
+                {
+                    "role": "user",
+                    "content": "Continue. If more actions are needed, return next JSON tool call. "
+                    "If done, return final text summary.",
+                },
+            ]
 
-        followup_msgs = [
-            {"role": "system", "content": SYSTEM_PROMPT + "\nLessons:\n" + self._render_lessons()},
-            *self.history,
-            {"role": "user", "content": "Summarize what you changed / found."},
-        ]
-        final_text = self.llm.chat(followup_msgs)
-        self.history.append({"role": "assistant", "content": final_text})
-        return final_text
+        timeout_text = "Stopped after max autonomous steps. Please continue with a follow-up request."
+        self.history.append({"role": "assistant", "content": timeout_text})
+        return timeout_text
 
 
     def _handle_local_command(self, user_text: str):
