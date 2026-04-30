@@ -46,12 +46,18 @@ class AgentOrchestrator:
 
         self.history.append({"role": "user", "content": user_text})
 
+        must_execute = self._request_requires_actions(user_text)
         current_msgs = msgs
+        executed_tools = 0
         for _ in range(MAX_TOOL_STEPS):
             model_text = self.llm.chat(current_msgs)
             tool_payload = self._maybe_parse_json(model_text)
             self.history.append({"role": "assistant", "content": model_text})
-            if not tool_payload and self._looks_like_manual_instructions(model_text):
+            if (
+                not tool_payload
+                and executed_tools == 0
+                and (must_execute or self._looks_like_manual_instructions(model_text))
+            ):
                 current_msgs = [
                     {"role": "system", "content": SYSTEM_PROMPT + "\nLessons:\n" + self._render_lessons()},
                     *self.history,
@@ -68,6 +74,7 @@ class AgentOrchestrator:
                 return model_text
 
             tool_result = self._execute_tool(tool_payload)
+            executed_tools += 1
             self.history.append({"role": "tool", "content": tool_result})
             current_msgs = [
                 {"role": "system", "content": SYSTEM_PROMPT + "\nLessons:\n" + self._render_lessons()},
@@ -82,6 +89,25 @@ class AgentOrchestrator:
         timeout_text = "Stopped after max autonomous steps. Please continue with a follow-up request."
         self.history.append({"role": "assistant", "content": timeout_text})
         return timeout_text
+
+    def _request_requires_actions(self, user_text: str) -> bool:
+        lowered = user_text.lower()
+        patterns = [
+            r"\bсозд(ай|ать|айте)\b",
+            r"\bсобер(и|ите|ать)\b",
+            r"\bзапуст(и|ите|ить)\b",
+            r"\bвыполн(и|ите|ить)\b",
+            r"\bсделай\b",
+            r"\bbuild\b",
+            r"\brun\b",
+            r"\bexecute\b",
+            r"\bcreate\b",
+            r"\bcompile\b",
+            r"\bdotnet\b",
+            r"\bpytest\b",
+            r"\bpython\b",
+        ]
+        return any(re.search(p, lowered) for p in patterns)
 
     def _looks_like_manual_instructions(self, text: str) -> bool:
         lowered = text.lower()
@@ -137,7 +163,7 @@ class AgentOrchestrator:
         elif tool == "list_files":
             result = self.tools.list_files(args.get("path", "."))
         elif tool == "run_command":
-            result = self.tools.run_command(args["command"], args.get("timeout_sec", 300))
+            result = self.tools.run_command(args["command"], args.get("timeout_sec", 120))
         else:
             return f"Unknown tool: {tool}"
 

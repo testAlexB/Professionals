@@ -101,3 +101,52 @@ def test_orchestrator_retries_when_llm_gives_manual_steps(tmp_path: Path):
     agent = AgentOrchestrator(llm, tools, memory)
     result = agent.run_turn("создай и собери проект")
     assert result == "Done"
+
+
+def test_orchestrator_forces_tools_for_action_requests(tmp_path: Path):
+    tools = WorkspaceTools(tmp_path)
+    memory = LessonMemory(tmp_path / "lessons.json")
+    llm = FakeLLM([
+        "Ок, сделаю проект.",
+        '{"tool":"run_command","args":{"command":"python -c \\"print(7)\\""}}',
+        "Done",
+    ])
+    agent = AgentOrchestrator(llm, tools, memory)
+    result = agent.run_turn("create project and run build")
+    assert result == "Done"
+
+
+def test_request_requires_actions_detects_russian_and_english(tmp_path: Path):
+    tools = WorkspaceTools(tmp_path)
+    memory = LessonMemory(tmp_path / "lessons.json")
+    agent = AgentOrchestrator(FakeLLM(["ok"]), tools, memory)
+    assert agent._request_requires_actions("создай проект и собери его")
+    assert agent._request_requires_actions("please create project and run build")
+    assert not agent._request_requires_actions("объясни архитектуру проекта")
+
+
+def test_manual_instruction_detector_patterns(tmp_path: Path):
+    tools = WorkspaceTools(tmp_path)
+    memory = LessonMemory(tmp_path / "lessons.json")
+    agent = AgentOrchestrator(FakeLLM(["ok"]), tools, memory)
+    assert agent._looks_like_manual_instructions("```bash\ndotnet new wpf -n App\n```")
+    assert agent._looks_like_manual_instructions("Перейдите в папку и выполните dotnet build")
+    assert not agent._looks_like_manual_instructions("Проект успешно создан и собран.")
+
+
+def test_action_request_without_tool_calls_hits_autonomous_cap(tmp_path: Path):
+    tools = WorkspaceTools(tmp_path)
+    memory = LessonMemory(tmp_path / "lessons.json")
+    llm = FakeLLM([
+        "Ок, начну.",
+        "Сейчас сделаю.",
+        "Подождите...",
+        "Еще думаю...",
+        "Шаг 5",
+        "Шаг 6",
+        "Шаг 7",
+        "Шаг 8",
+    ])
+    agent = AgentOrchestrator(llm, tools, memory)
+    result = agent.run_turn("сделай проект и запусти сборку")
+    assert "Stopped after max autonomous steps" in result
